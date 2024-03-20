@@ -32,6 +32,14 @@ If you want to contribute to Quant, submit a pull request.
   
 ### Requirements
 
+To contribute to the Automated Trading System with Risk Management project, you will need the following:
+
+Python (3.6 or higher)
+CCXT library (for exchange connectivity)
+NumPy library (for mathematical operations)
+Threading library (for parallel processing)
+Logging library (for logging messages)
+
 
 ### Setup
 
