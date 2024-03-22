@@ -1,9 +1,18 @@
-import numpy as np
-import time
-import threading
-import queue
-import ccxt
 import logging
+import queue
+import threading
+import time
+from enum import StrEnum
+
+import ccxt
+import numpy as np
+
+
+class Order(StrEnum):
+    BUY = 'BUY'
+    SELL = 'SELL'
+    HOLD = 'HOLD'
+
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -51,9 +60,9 @@ def execute_order(order_queue, stop_flag):
         try:
             order = order_queue.get(timeout=1)
             side, price = order['side'], order['price']
-            if side == 'BUY':
+            if side == Order.BUY:
                 execute_buy_order(price)
-            elif side == 'SELL':
+            elif side == Order.SELL:
                 execute_sell_order(price)
             order_queue.task_done()
         except queue.Empty:
@@ -78,11 +87,11 @@ def ema_strategy(prices, short_ema_period, long_ema_period):
     short_ema = np.mean(prices[-short_ema_period:])
     long_ema = np.mean(prices[-long_ema_period:])
     if short_ema > long_ema:
-        return 'BUY'
+        return Order.BUY
     elif short_ema < long_ema:
-        return 'SELL'
+        return Order.SELL
     else:
-        return 'HOLD'
+        return Order.HOLD
 
 
 def bollinger_band_strategy(prices, window_size, num_std_dev):
@@ -92,11 +101,11 @@ def bollinger_band_strategy(prices, window_size, num_std_dev):
     lower_band = sma - num_std_dev * std_dev
     current_price = prices[-1]
     if current_price > upper_band:
-        return 'SELL'
+        return Order.SELL
     elif current_price < lower_band:
-        return 'BUY'
+        return Order.BUY
     else:
-        return 'HOLD'
+        return Order.HOLD
 
 
 # Main trading loop
@@ -129,10 +138,10 @@ while not stop_flag.is_set():
         bb_signal = bollinger_band_strategy(closing_prices, bollinger_window_size, bollinger_num_std_dev)
 
         # Buy or sell based on the signals
-        if ema_signal == 'BUY' and bb_signal == 'BUY' and position < MAX_POSITION_SIZE:
+        if ema_signal == Order.BUY and bb_signal == Order.BUY and position < MAX_POSITION_SIZE:
             execute_buy_order(current_price)
             position += 1
-        elif ema_signal == 'SELL' and bb_signal == 'SELL' and position > -MAX_POSITION_SIZE:
+        elif ema_signal == Order.SELL and bb_signal == Order.SELL and position > -MAX_POSITION_SIZE:
             execute_sell_order(current_price)
             position -= 1
 
